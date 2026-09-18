@@ -1,0 +1,81 @@
+[
+  {
+    "model": "auth.user",
+    "pk": 1,
+    "fields": {
+      "username": "demo",
+      "email": "demo@todoso.dev",
+      "password": "pbkdf2_sha256$600000$demo$eDemoHashForDevelopmentOnly=",
+      "is_active": true,
+      "is_staff": false,
+      "is_superuser": false,
+      "date_joined": "2024-01-01T00:00:00Z"
+    }
+  },
+  {
+    "model": "core.taskmodel",
+    "pk": 1,
+    "fields": {
+      "owner": 1,
+      "title": "Set up development environment",
+      "description": "Install Python 3.12, Docker, and configure .env",
+      "status": "completed",
+      "priority": "high",
+      "created_at": "2024-01-01T09:00:00Z",
+      "due_date": null
+    }
+  },
+  {
+    "model": "core.taskmodel",
+    "pk": 2,
+    "fields": {
+      "owner": 1,
+      "title": "Write unit tests",
+      "description": "Cover domain entities and use cases",
+      "status": "pending",
+      "priority": "high",
+      "created_at": "2024-01-01T09:05:00Z",
+      "due_date": "2024-02-01T00:00:00Z"
+    }
+  },
+  {
+    "model": "core.taskmodel",
+    "pk": 3,
+    "fields": {
+      "owner": 1,
+      "title": "Document the API",
+      "description": "Use drf-spectacular for OpenAPI docs",
+      "status": "pending",
+      "priority": "medium",
+      "created_at": "2024-01-01T09:10:00Z",
+      "due_date": null
+    }
+  },
+  {
+    "model": "core.blockedsitemodel",
+    "pk": 1,
+    "fields": {
+      "owner": 1,
+      "domain": "facebook.com",
+      "is_active": true
+    }
+  },
+  {
+    "model": "core.blockedsitemodel",
+    "pk": 2,
+    "fields": {
+      "owner": 1,
+      "domain": "twitter.com",
+      "is_active": true
+    }
+  },
+  {
+    "model": "core.blockedsitemodel",
+    "pk": 3,
+    "fields": {
+      "owner": 1,
+      "domain": "youtube.com",
+      "is_active": false
+    }
+  }
+]
