@@ -194,7 +194,7 @@ app.on('before-quit', async (event) => {
     console.error('[Failsafe] Error during quit cleanup:', err)
   }
 
-  // Exit kiosk
+
   if (mainWindow && kioskService.isKioskActive()) {
     kioskService.exitKiosk(mainWindow)
   }
