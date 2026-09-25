@@ -1,5 +1,5 @@
-import { Tasks } from './index';
+import { TaskList } from './components/TaskList';
 
-export function TasksFeature() {
-  return <Tasks />;
+export function Tasks() {
+  return <TaskList />;
 }
