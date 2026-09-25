@@ -1,61 +1,89 @@
-import axios from 'axios'
-import { useAuthStore } from '../../features/auth/authStore'
+import axios from 'axios';
+import { useAuthStore } from '../features/auth/authStore';
+import { authApi } from '../features/auth/api/authApi';
 
 export const api = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api',
   headers: {
     'Content-Type': 'application/json'
   }
-})
-
-// TODO(auth): reemplazar por el token real de la sesión cuando exista el login
-// Por ahora, en desarrollo, intentamos usar una variable de entorno o un token harcodeado temporal si es necesario
-const DEV_TOKEN = import.meta.env.VITE_DEV_JWT || ''
-if (import.meta.env.DEV && DEV_TOKEN) {
-  console.warn('⚠️ Usando token temporal de desarrollo para VITE_DEV_JWT')
-}
+});
 
 api.interceptors.request.use((config) => {
-  // Cuando llegue el login real, esto usará el token del store
-  let token = useAuthStore.getState().accessToken
-
-  // TODO(auth): fallback temporal
-  if (!token && DEV_TOKEN) {
-    token = DEV_TOKEN
-  }
+  const token = useAuthStore.getState().accessToken;
 
   if (token && config.headers) {
-    config.headers.Authorization = `Bearer ${token}`
+    config.headers.Authorization = `Bearer ${token}`;
   }
-  return config
-})
+  return config;
+});
+
+let isRefreshing = false;
+let failedQueue: Array<{ resolve: (val?: any) => void; reject: (err: any) => void }> = [];
+
+const processQueue = (error: any, token: string | null = null) => {
+  failedQueue.forEach((prom) => {
+    if (error) {
+      prom.reject(error);
+    } else {
+      prom.resolve(token);
+    }
+  });
+  failedQueue = [];
+};
 
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
-    const originalRequest = error.config
+    const originalRequest = error.config;
     
-    // Auto refresh logic (preparado para el auth real)
     if (error.response?.status === 401 && !originalRequest._retry) {
-      originalRequest._retry = true
+      if (isRefreshing) {
+        return new Promise((resolve, reject) => {
+          failedQueue.push({ resolve, reject });
+        }).then(token => {
+          originalRequest.headers.Authorization = `Bearer ${token}`;
+          return api(originalRequest);
+        }).catch(err => {
+          return Promise.reject(err);
+        });
+      }
+
+      originalRequest._retry = true;
+      isRefreshing = true;
       
       try {
-        const refreshToken = await window.electronAPI.store.get('refreshToken' as any)
-        if (!refreshToken) throw new Error('No refresh token')
+        const refreshToken = await window.electronAPI.auth.getRefreshToken();
         
-        const res = await axios.post(`${api.defaults.baseURL}/auth/refresh/`, { refresh: refreshToken })
-        const newToken = res.data.access
+        if (!refreshToken) {
+          throw new Error('No refresh token available');
+        }
         
-        await useAuthStore.getState().setToken(newToken)
-        originalRequest.headers.Authorization = `Bearer ${newToken}`
+        const newTokens = await authApi.refresh(refreshToken);
         
-        return axios(originalRequest)
+        // El backend puede o no devolver un nuevo refresh. 
+        // Si no devuelve, re-usamos el anterior.
+        const tokensToSave = {
+          access: newTokens.access,
+          refresh: newTokens.refresh || refreshToken
+        };
+
+        const currentRememberMe = useAuthStore.getState().rememberMe;
+        await useAuthStore.getState().setSession(tokensToSave, currentRememberMe);
+        
+        processQueue(null, newTokens.access);
+        
+        originalRequest.headers.Authorization = `Bearer ${newTokens.access}`;
+        return api(originalRequest);
       } catch (e) {
-        useAuthStore.getState().logout()
-        return Promise.reject(e)
+        processQueue(e, null);
+        await useAuthStore.getState().logout();
+        return Promise.reject(e);
+      } finally {
+        isRefreshing = false;
       }
     }
     
-    return Promise.reject(error)
+    return Promise.reject(error);
   }
-)
+);

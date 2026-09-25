@@ -1,7 +1,9 @@
 import { Outlet, NavLink } from 'react-router-dom'
 import { CheckSquare, Ban, Timer, BarChart, Settings as SettingsIcon } from 'lucide-react'
+import { useLogout } from '../features/auth'
 
 export function Layout() {
+  const handleLogout = useLogout()
   const navItems = [
     { to: '/', label: 'Dashboard', icon: Timer }, // Maybe use a different icon
     { to: '/tasks', label: 'Tareas', icon: CheckSquare },
@@ -35,6 +37,15 @@ export function Layout() {
             </NavLink>
           ))}
         </nav>
+        <div className="p-4 border-t">
+          {/* // TODO(settings): mover este botón a la pantalla de Ajustes cuando exista esa fase */}
+          <button 
+            onClick={handleLogout}
+            className="w-full text-left text-sm text-destructive hover:bg-destructive/10 px-3 py-2 rounded-md transition-colors font-medium"
+          >
+            Cerrar sesión
+          </button>
+        </div>
       </aside>
 
       {/* Main Content */}

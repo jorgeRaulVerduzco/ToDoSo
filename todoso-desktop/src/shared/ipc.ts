@@ -78,6 +78,11 @@ export const IPC_CHANNELS = {
   STORE_SET: 'store:set',
   STORE_DELETE: 'store:delete',
 
+  // Auth
+  AUTH_GET_REFRESH: 'auth:get-refresh',
+  AUTH_SET_REFRESH: 'auth:set-refresh',
+  AUTH_CLEAR_REFRESH: 'auth:clear-refresh',
+
   // Window management
   WINDOW_MINIMIZE: 'window:minimize',
   WINDOW_CLOSE: 'window:close',

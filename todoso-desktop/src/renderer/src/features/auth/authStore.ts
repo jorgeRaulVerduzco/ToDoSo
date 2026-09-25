@@ -1,40 +1,42 @@
-import { create } from 'zustand'
+import { create } from 'zustand';
+import { TokenPair } from '../types/auth';
 
 interface AuthState {
-  isAuthenticated: boolean
-  isInitialized: boolean
-  accessToken: string | null
-  setToken: (token: string) => void
-  logout: () => void
-  initialize: () => Promise<void>
+  accessToken: string | null;
+  isAuthenticated: boolean;
+  isInitializing: boolean;
+  rememberMe: boolean;
+  setSession: (tokens: TokenPair, rememberMe: boolean) => Promise<void>;
+  logout: () => Promise<void>;
+  setInitializing: (isInitializing: boolean) => void;
 }
 
 export const useAuthStore = create<AuthState>((set) => ({
-  isAuthenticated: false,
-  isInitialized: false,
   accessToken: null,
+  isAuthenticated: false,
+  isInitializing: true,
+  rememberMe: true,
 
-  setToken: async (token: string) => {
-    // In a real app we might securely store it using Keytar or just electron-store for this MVP
-    await window.electronAPI.store.set('accessToken' as any, token)
-    set({ isAuthenticated: true, accessToken: token })
+  setSession: async (tokens: TokenPair, rememberMe: boolean) => {
+    await window.electronAPI.auth.setRefreshToken(tokens.refresh, rememberMe);
+    set({
+      accessToken: tokens.access,
+      isAuthenticated: true,
+      rememberMe,
+      isInitializing: false
+    });
   },
 
   logout: async () => {
-    await window.electronAPI.store.delete('accessToken' as any)
-    await window.electronAPI.store.delete('refreshToken' as any)
-    set({ isAuthenticated: false, accessToken: null })
+    await window.electronAPI.auth.clearRefreshToken();
+    set({
+      accessToken: null,
+      isAuthenticated: false,
+      isInitializing: false
+    });
   },
 
-  initialize: async () => {
-    const token = await window.electronAPI.store.get('accessToken' as any)
-    if (token && typeof token === 'string') {
-      set({ isAuthenticated: true, accessToken: token, isInitialized: true })
-    } else {
-      set({ isAuthenticated: false, accessToken: null, isInitialized: true })
-    }
+  setInitializing: (isInitializing: boolean) => {
+    set({ isInitializing });
   }
-}))
-
-// Auto initialize
-useAuthStore.getState().initialize()
+}));

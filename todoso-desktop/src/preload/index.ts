@@ -92,6 +92,16 @@ const electronAPI = {
       ipcRenderer.invoke(IPC_CHANNELS.SYSTEM_AUTO_LAUNCH, enabled)
   },
 
+  // ─── Auth ─────────────────────────────────────────────────
+  auth: {
+    getRefreshToken: (): Promise<string | null> =>
+      ipcRenderer.invoke(IPC_CHANNELS.AUTH_GET_REFRESH),
+    setRefreshToken: (token: string, persist: boolean): Promise<void> =>
+      ipcRenderer.invoke(IPC_CHANNELS.AUTH_SET_REFRESH, { token, persist }),
+    clearRefreshToken: (): Promise<void> =>
+      ipcRenderer.invoke(IPC_CHANNELS.AUTH_CLEAR_REFRESH)
+  },
+
   // ─── Session events (main → renderer) ─────────────────────
   onSessionEvent: (callback: (event: unknown) => void): (() => void) => {
     const handler = (_event: Electron.IpcRendererEvent, data: unknown): void => {

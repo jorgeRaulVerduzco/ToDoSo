@@ -23,6 +23,8 @@ import { registerNotificationHandlers } from './ipc/notificationHandlers'
 import { registerSystemHandlers } from './ipc/systemHandlers'
 import { registerWindowHandlers } from './ipc/windowHandlers'
 import { registerTrayHandlers } from './ipc/trayHandlers'
+import { registerAuthHandlers } from './ipc/authHandlers'
+import { SecureTokenStore } from './services/auth/secureTokenStore'
 import type { AppPreferences } from '../shared/ipc'
 import { DEFAULT_PREFERENCES } from '../shared/ipc'
 
@@ -151,6 +153,7 @@ app.whenReady().then(async () => {
 
   // Register all IPC handlers
   const store = await getStore()
+  const secureTokenStore = new SecureTokenStore(app.getPath('userData'))
   registerBlockerHandlers(blocker)
   registerKioskHandlers(kioskService, () => mainWindow)
   registerStoreHandlers(store)
@@ -158,6 +161,7 @@ app.whenReady().then(async () => {
   registerSystemHandlers()
   registerWindowHandlers(() => mainWindow, () => petWindow, (win) => { petWindow = win }, createPetWindow)
   registerTrayHandlers(trayService)
+  registerAuthHandlers(secureTokenStore)
 
   // Dev tools in development
   if (is.dev) {
